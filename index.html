@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Memory Coach</title>
+<style>
+:root{
+  --bg:#F9EBE0; --card:#fffaf5; --ink:#2E1F26; --soft:#7b6670; --mul:#6E4A58; --sage:#6D7F6B;
+  --honey:#E8B86D; --red:#C8102E; --line:#e6d3c6; --fs:30px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:20px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;border-radius:14px;padding:14px 18px;min-height:54px;background:#ecdcd0}
+button:disabled{opacity:.4;cursor:default}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px 120px}
+h1{font-size:30px;margin:6px 0 2px;color:var(--mul)}
+h2{font-size:24px;margin:22px 0 8px;color:var(--mul)}
+.sub{color:var(--soft);font-size:17px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.big{background:var(--mul);color:#fff;font-weight:700;font-size:22px;width:100%;min-height:68px}
+.wide{width:100%}
+.ghost{background:transparent;border:2px solid var(--line)}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.top .back{background:transparent;font-size:26px;padding:6px 12px;min-height:44px}
+.screen{display:none}.screen.on{display:block}
+.plan{font-size:22px;line-height:1.45}
+.plan b{color:var(--mul)}
+.pill{display:inline-block;border-radius:99px;padding:4px 12px;font-size:16px;font-weight:700;background:#ecdcd0}
+.pill.fast{background:var(--honey)}.pill.spaced{background:#cfd9cd}
+label.f{display:block;margin:10px 0 4px;font-weight:700}
+input[type=date],select,input[type=text],textarea{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+textarea{min-height:70px}
+
+/* practice */
+#pCode{font-size:34px;font-weight:800;color:var(--mul);letter-spacing:.04em}
+#pStage{font-size:17px;color:var(--soft)}
+#pFeel{font-style:italic;color:var(--soft);font-size:18px;margin:6px 0}
+#pAsk{font-size:22px;font-weight:700;margin:10px 0}
+#pText{font-size:var(--fs);line-height:1.55;min-height:120px}
+#pText .old{color:#a8959e}
+#pText .new{background:#fff3c4;border-radius:6px;padding:0 4px}
+#pText .kw{display:inline-block;background:#fff;border:2px solid var(--mul);border-radius:12px;padding:2px 12px;margin:4px 6px 4px 0}
+#pText .cue{letter-spacing:.08em;margin-bottom:.35em}
+#pText .ctx{font-size:.6em;color:#a8959e;display:block;margin-top:14px}
+.grades{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+.grades button{font-size:21px;font-weight:700;min-height:70px;color:#fff}
+.g{background:var(--sage)}.p{background:var(--honey);color:var(--ink)!important}.m{background:var(--mul)}
+.gl{font-weight:700;margin:16px 0 0;font-size:18px}
+.gl small{font-weight:400;color:var(--soft)}
+#pCheck{margin-top:10px;font-size:18px;color:var(--soft)}
+#pCheck .hit{color:var(--sage);font-weight:700}#pCheck .miss{color:var(--red);font-weight:700}
+.listening{background:var(--red)!important;color:#fff}
+
+/* lists */
+table{width:100%;border-collapse:collapse;font-size:18px}
+td,th{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.code{font-weight:800;color:var(--mul);white-space:nowrap;cursor:pointer;text-decoration:underline dotted}
+.dots{letter-spacing:2px;color:var(--mul);white-space:nowrap}
+.ready{color:var(--sage);font-weight:800}
+.vo{color:var(--soft)}
+.chunkset{border-top:2px solid var(--line);padding:14px 0}
+.chunkset .head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.chunkset .txt{color:var(--soft);font-size:17px;margin:6px 0}
+.toggle{display:flex;align-items:center;gap:8px;font-weight:700}
+.toggle input{width:26px;height:26px}
+#slate{position:fixed;inset:0;background:#fff;display:none;align-items:center;justify-content:center;
+  flex-direction:column;z-index:50;font-weight:900;color:var(--ink);text-align:center}
+#slate .c{font-size:18vw;line-height:1}#slate .t{font-size:5vw;color:var(--soft);margin-top:2vw}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:12px;display:none;z-index:60;max-width:90%;font-size:18px}
+@media (max-width:600px){ :root{--fs:25px} .grades button{font-size:18px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= HOME ================= -->
+<section class="screen on" id="home">
+  <h1>Memory Coach</h1>
+  <div class="sub" id="epName">No script yet</div>
+
+  <div class="card" id="noScript">
+    <div class="plan">Open the episode's <b>"Teleprompter - for the app.txt"</b> file to start.</div><br>
+    <button class="big" onclick="MC.pickScript()">Open script (.txt)</button>
+  </div>
+
+  <div id="hasScript" style="display:none">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><span class="pill" id="modePill">Fast</span> <span class="sub" id="countdown"></span></div>
+      </div>
+      <div class="plan" id="plan" style="margin-top:10px"></div>
+    </div>
+    <button class="big" id="btnPractice" onclick="MC.startPractice()">▶ Practise now</button>
+    <div class="row" style="margin-top:10px">
+      <button class="wide" onclick="MC.startFilmingDay()">🎬 Filming-day drill</button>
+      <button class="wide" onclick="MC.show('walk')">🎧 Listen while walking</button>
+      <button class="wide" onclick="MC.openChunks()">📋 Chunks &amp; locked words</button>
+      <button class="wide" onclick="MC.openProgress()">📊 Ready to film?</button>
+      <button class="wide ghost" onclick="MC.show('settings')">⚙ Settings &amp; backup</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRACTICE ================= -->
+<section class="screen" id="practice">
+  <div class="top"><button class="back" onclick="MC.endPractice()">✕</button>
+    <div><div id="pCode"></div><div id="pStage"></div></div>
+    <div class="sub" id="pLeft" style="margin-left:auto"></div></div>
+  <div class="card">
+    <div id="pFeel"></div>
+    <div id="pAsk"></div>
+    <div id="pText"></div>
+    <div id="pCheck"></div>
+  </div>
+  <div id="pButtons"></div>
+</section>
+
+<!-- ================= CHUNKS ================= -->
+<section class="screen" id="chunks">
+  <div class="top"><button class="back" onclick="MC.goHome()">←</button><h1>Chunks &amp; locked words</h1></div>
+  <div class="card plan">
+    🔒 <b>Locked words</b> = words you must say exactly (graphics, numbers, names, stressed words).
+    I suggested them. Fix them, one per line. Untick a chunk to skip it (voice-over chunks are skipped already).
+  </div>
+  <div id="chunkList"></div>
+  <button class="big" onclick="MC.confirmChunks()">✓ These are right, save</button>
+</section>
+
+<!-- ================= PROGRESS ================= -->
+<section class="screen" id="progress">
+  <div class="top"><button class="back" onclick="MC.goHome()">←</button><h1>Ready to film?</h1></div>
+  <div class="card plan" id="progSum"></div>
+  <div class="card"><table id="progTable"></table></div>
+  <div class="sub">Tap a code (like EP02 C07) to show it big. Show it to the camera before each take, so the editor can name the clip "EP02 C07 take 1".</div>
+</section>
+
+<!-- ================= WALK ================= -->
+<section class="screen" id="walk">
+  <div class="top"><button class="back" onclick="MC.stopWalk();MC.goHome()">←</button><h1>Listen while walking</h1></div>
+  <div class="card plan">Plays your chunks in order: <b>your own recording</b> if you made one (in 📋 Chunks), otherwise a computer voice.
+    Keep the screen on.</div>
+  <label class="f">Which chunks</label>
+  <select id="walkWhich"><option value="all">All my chunks</option><option value="notready">Only chunks not ready yet</option></select>
+  <label class="f">Gap between chunks</label>
+  <select id="walkGap"><option value="2">2 seconds</option><option value="5" selected>5 seconds (say it after me)</option><option value="10">10 seconds</option></select>
+  <div class="card" style="text-align:center"><div id="walkNow" style="font-size:40px;font-weight:800;color:var(--mul)">—</div></div>
+  <div class="row"><button class="big" id="walkBtn" onclick="MC.toggleWalk()">▶ Play</button></div>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section class="screen" id="settings">
+  <div class="top"><button class="back" onclick="MC.goHome()">←</button><h1>Settings &amp; backup</h1></div>
+  <div class="card">
+    <label class="f">Filming date</label>
+    <input type="date" id="sDate">
+    <label class="f">Style</label>
+    <select id="sStyle">
+      <option value="auto">Automatic (Fast if filming is in 2 days or less)</option>
+      <option value="fast">Fast (1–2 days)</option>
+      <option value="spaced">Spaced (more time)</option>
+    </select>
+    <label class="f">Practice cues</label>
+    <select id="sCues">
+      <option value="letters">First letters (easier)</option>
+      <option value="none">Nothing, only the topic (harder)</option>
+    </select>
+    <label class="f">Speech check (only listens for 🔒 locked words; never judges accent)</label>
+    <select id="sCheck"><option value="off">Off</option><option value="on">On</option></select>
+    <label class="f">Speech language</label>
+    <select id="sLang"><option value="en-GB">English (UK)</option><option value="en-US">English (US)</option></select>
+    <label class="f">Text size</label>
+    <input type="range" id="sSize" min="20" max="48" step="1" class="wide">
+    <br><br><button class="big" onclick="MC.saveSettings()">Save settings</button>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Script</h2>
+    <div class="sub">Open a new episode, or a newer version of this one (your progress is kept by chunk number).</div><br>
+    <button class="wide" onclick="MC.pickScript()">Open script (.txt)</button><br><br>
+    <label class="f">Switch episode</label><select id="sEpisode" onchange="MC.switchEpisode(this.value)"></select>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Backup</h2>
+    <div class="sub">Your progress lives only on this device. Save a backup file now and then (recordings are not inside it).</div><br>
+    <div class="row"><button class="wide" onclick="MC.exportBackup()">💾 Save my progress (file)</button>
+    <button class="wide" onclick="MC.pickBackup()">📂 Load a backup file</button>
+    <button class="wide ghost" onclick="MC.resetEpisode()">↺ Start this episode again</button></div>
+  </div>
+</section>
+</div>
+
+<div id="slate" onclick="this.style.display='none'"><div class="c" id="slateC"></div><div class="t">tap to close</div></div>
+<div id="toast"></div>
+<input type="file" id="fileTxt" accept=".txt,text/plain" hidden>
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+
+<script>
+const MC = (() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const HOUR = 3600e3, DAY = 24 * HOUR;
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem("mc_" + k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("mc_" + k, JSON.stringify(v)); }catch(e){ toast("Could not save on this device."); } }
+};
+function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = "none", 3200); }
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* =========================================================== parse the teleprompter .txt */
+function clean(s){
+  return s.replace(/\[[^\]]*\]/g, " ").replace(/(^|\s)\/+(?=\s|$)/g, " ").replace(/(^|\s)~(?=\s|$)/g, " ")
+          .replace(/\s+/g, " ").trim();
+}
+function splitSentences(body){
+  const out = [];
+  for (const piece of body.split(/\s\/{2,}(?=\s|$)/)){
+    const c = clean(piece); if (!c) continue;
+    for (const s of c.split(/(?<=[.!?]['’"”)]?)\s+(?=['‘"“(]?[A-Z])/)) if (s.trim()) out.push(s.trim());
+  }
+  const merged = [];                     // tiny bits ("Okay.") join the next sentence
+  for (let i = 0; i < out.length; i++){
+    const words = out[i].split(" ").length;
+    if (words < 4 && i < out.length - 1){ out[i + 1] = out[i] + " " + out[i + 1]; continue; }
+    if (words < 4 && merged.length){ merged[merged.length - 1] += " " + out[i]; continue; }
+    merged.push(out[i]);
+  }
+  return merged;
+}
+function parseScript(src, fileName){
+  const lines = src.replace(/\r/g, "").split("\n");
+  const first = (lines.find(l => l.trim()) || "").trim();
+  const m = (fileName || "").match(/EP\d+/i) || first.match(/EP\d+/i);
+  const code = m ? m[0].toUpperCase() : "EP";
+  const title = first.replace(/\s*-\s*TELEPROMPTER\s*$/i, "");
+  const chunks = []; let cur = null;
+  for (const raw of lines){
+    const line = raw.trim();
+    const h = line.match(/^===\s*CHUNK\s*(\d+)\s*===\s*(.*)$/i);
+    if (h){
+      const lab = h[2] || "";
+      const kind = /voice|\bvo\b/i.test(lab) ? (/camera/i.test(lab) ? "both" : "vo") : "cam";
+      cur = {n: h[1].padStart(2, "0"), label: lab.trim(), kind, feel: "", body: []}; chunks.push(cur); continue;
+    }
+    if (!cur || !line) continue;
+    if (/^\(.*\)$/.test(line) && !cur.body.length){ cur.feel = line.slice(1, -1); continue; }
+    cur.body.push(line);
+  }
+  for (const c of chunks){
+    const body = c.body.join(" ");
+    c.sentences = splitSentences(body);
+    c.text = c.sentences.join(" ");
+    c.suggest = suggestKeywords(body, c.sentences);
+  }
+  return {code, title, chunks: chunks.filter(c => c.sentences.length)};
+}
+
+/* =========================================================== locked-word suggestions */
+const NUMW = new Set("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety hundred thousand million".split(" "));
+const NOTNAME = new Set("I I'm I'd I've I'll Okay OK Oh And But So Now Then The A Well Yes No Let Because It It's This That What How Why Who Not Just Our My Your We You They She He There Here Dr Doctor".split(" "));
+function suggestKeywords(rawBody, sentences){
+  const found = [], seen = new Set();
+  const add = k => { k = k.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}'%]+$/gu, ""); const key = k.toLowerCase(); if (k.length > 1 && !seen.has(key)){ seen.add(key); found.push(k); } };
+  const body = clean(rawBody);
+  // 1. stressed CAPS words (these usually match the graphics)
+  for (const m of body.matchAll(/\b[A-Z]{2,}(?:[\-'’][A-Z]+)*(?:\s+[A-Z]{2,}(?:[\-'’][A-Z]+)*)*\b/g)) if (!/^(OK|TV)$/.test(m[0])) add(m[0]);
+  // 2. numbers, in digits or words
+  for (const m of body.matchAll(/\b\d[\d,.]*%?|\b(?:a\s+)?(?:(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b(?:[\s-]+(?:and\s+)?)?)+/gi)){
+    const t = m[0].trim(); const ws = t.toLowerCase().split(/[\s-]+/).filter(w => NUMW.has(w));
+    if (/\d/.test(t) || ws.length >= 2 || /^a\s/i.test(t)) add(t);
+  }
+  // 3. names: Capitalised words that do not start a sentence
+  for (const s of sentences){
+    const ws = s.split(" ");
+    for (let i = 1; i < ws.length; i++){
+      const w = ws[i].replace(/^['‘"“(]+|[^\p{L}\p{N}']+$/gu, "");
+      if (/^\p{Lu}\p{Ll}/u.test(w) && !NOTNAME.has(w) && !/[.!?:…]['’"”]?$/.test(ws[i - 1])){
+        let name = w;
+        while (i + 1 < ws.length && /^\p{Lu}\p{Ll}/u.test(ws[i + 1]) && /\p{Ll}$/u.test(ws[i])){ i++; name += " " + ws[i].replace(/[^\p{L}\p{N}']+$/u, ""); }
+        add(name);
+      }
+    }
+  }
+  return found;
+}
+
+/* =========================================================== state */
+let ep = null;      // parsed episode
+let st = null;      // saved state for this episode
+function blankChunk(c){ return {include: c.kind === "cam", keywords: c.suggest.slice(), topic: firstWords(c.text), stage: "new", step: 1, box: 0, due: 0, learnedAt: 0, kw: [0,0,0], fl: [0,0,0]}; }
+function firstWords(t){ return t.split(" ").slice(0, 4).join(" ").replace(/[,.;:!?]+$/, "") + "…"; }
+function loadEpisode(code){
+  const s = store.get("ep_" + code, null); if (!s) return false;
+  st = s; ep = parseScript(s.src, s.fileName);
+  for (const c of ep.chunks){
+    if (!st.chunks[c.n]) st.chunks[c.n] = blankChunk(c);
+    const k = st.chunks[c.n]; if (k.step > c.sentences.length) k.step = c.sentences.length;
+  }
+  store.set("last", code); return true;
+}
+function save(){ if (st) store.set("ep_" + st.code, st); }
+function newScript(src, fileName){
+  const parsed = parseScript(src, fileName);
+  if (!parsed.chunks.length){ toast("I couldn't find any '=== CHUNK' lines in that file."); return; }
+  const old = store.get("ep_" + parsed.code, null);
+  st = old || {code: parsed.code, chunks: {}, filmDate: "", style: "auto", confirmed: false};
+  st.src = src; st.fileName = fileName; st.title = parsed.title;
+  if (old) st.confirmed = false;           // new version: check locked words again
+  const idx = store.get("index", []); if (!idx.includes(parsed.code)) { idx.push(parsed.code); store.set("index", idx); }
+  save(); loadEpisode(parsed.code);
+  toast(old ? "Script updated. Your progress is kept." : "Script loaded: " + parsed.code);
+  openChunks();
+}
+const settings = Object.assign({cues: "letters", check: "off", lang: "en-GB", size: 30}, store.get("settings", {}));
+document.documentElement.style.setProperty("--fs", settings.size + "px");
+const C = n => ep.chunks.find(c => c.n === n);
+const mine = () => ep.chunks.filter(c => st.chunks[c.n].include);
+
+/* =========================================================== timing: fast vs spaced */
+function deadline(){ if (!st.filmDate) return 0; const [y, m, d] = st.filmDate.split("-").map(Number); return new Date(y, m - 1, d, 8, 0).getTime(); }
+function style(){ if (st.style !== "auto") return st.style; const d = deadline(); return d && d - Date.now() <= 2.5 * DAY ? "fast" : "spaced"; }
+// waiting time after reaching box b (1..4) before the next check
+function interval(box){
+  const fast = style() === "fast";
+  const base = fast ? [1, 3, 8, 12][box - 1] * HOUR : [1, 2, 4, 7][box - 1] * DAY;
+  const share = [0.12, 0.2, 0.28, 0.35][box - 1];
+  const d = deadline(); const left = d ? d - Date.now() : Infinity;
+  return Math.max(fast ? 20 * 60e3 : 3 * HOUR, Math.min(base, left * share));
+}
+const dayKey = t => new Date(t).toDateString();
+function quotaToday(){
+  const left = mine().filter(c => st.chunks[c.n].stage === "new" || st.chunks[c.n].stage === "learn");
+  // spaced: learn everything in the first ~70% of the time, so the last chunks still get their reviews
+  const d = deadline(); const days = d ? Math.max(1, Math.ceil(((d - Date.now()) / DAY - 0.25) * (style() === "spaced" ? 0.7 : 1))) : 3;
+  const learnedToday = mine().filter(c => st.chunks[c.n].learnedAt && dayKey(st.chunks[c.n].learnedAt) === dayKey(Date.now())).length;
+  const perDay = d ? Math.ceil((left.length + learnedToday) / days) : 4;
+  return Math.max(0, perDay - learnedToday);
+}
+
+/* =========================================================== home */
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); window.scrollTo(0, 0);
+  if (id === "settings") fillSettings(); }
+function goHome(){ releaseWake(); show("home"); renderHome(); }
+function renderHome(){
+  const has = !!ep;
+  $("noScript").style.display = has ? "none" : "block"; $("hasScript").style.display = has ? "block" : "none";
+  if (!has) return;
+  $("epName").textContent = st.title || st.code;
+  const fs = style(); $("modePill").textContent = fs === "fast" ? "⚡ Fast" : "🌱 Spaced"; $("modePill").className = "pill " + fs;
+  const d = deadline(), now = Date.now();
+  $("countdown").textContent = d ? (d > now ? "Filming in " + humanTime(d - now) : "Filming day!") : "No filming date yet";
+  const all = mine(), ready = all.filter(c => st.chunks[c.n].box >= 5).length;
+  const due = all.filter(c => { const k = st.chunks[c.n]; return k.box >= 1 && k.box < 5 && k.due <= now; }).length;
+  const learning = all.filter(c => st.chunks[c.n].stage === "learn").length;
+  const newLeft = all.filter(c => st.chunks[c.n].stage === "new").length;
+  let html = "";
+  if (!st.confirmed) html += "First: tap <b>📋 Chunks &amp; locked words</b> and check them.<br>";
+  if (!st.filmDate) html += "Set your <b>filming date</b> in ⚙ Settings, so I can plan.<br>";
+  html += `<b>${ready}</b> of ${all.length} chunks ready to film.<br>`;
+  const q = Math.min(quotaToday(), newLeft);
+  html += `Now: <b>${due}</b> to review` + (learning ? `, <b>${learning}</b> half-learned` : "") + (q ? `, <b>${q}</b> new to learn today` : "") + ".";
+  if (!due && !learning && !q && ready < all.length){
+    const next = all.map(c => st.chunks[c.n]).filter(k => k.box >= 1 && k.box < 5).map(k => k.due).sort((a, b) => a - b)[0];
+    if (next) html += `<br>Next review: <b>${new Date(next).toLocaleString([], {weekday: "short", hour: "2-digit", minute: "2-digit"})}</b>. Resting is part of remembering.`;
+  }
+  if (d && d - now < 14 * HOUR && ready < all.length) html += "<br>🎬 Filming is close: use the <b>Filming-day drill</b>.";
+  $("plan").innerHTML = html;
+  $("btnPractice").disabled = !st.confirmed;
+}
+function humanTime(ms){ const h = ms / HOUR; return h < 48 ? Math.round(h) + " hours" : Math.round(h / 24) + " days"; }
+
+/* =========================================================== chunks screen */
+function openChunks(){
+  const box = $("chunkList"); box.innerHTML = "";
+  for (const c of ep.chunks){
+    const k = st.chunks[c.n];
+    const kindTxt = c.kind === "cam" ? "On camera" : c.kind === "vo" ? "Voice-over (you read it)" : "Voice-over, also filmed on camera";
+    const d = document.createElement("div"); d.className = "chunkset";
+    d.innerHTML = `<div class="head"><label class="toggle"><input type="checkbox" data-n="${c.n}" class="inc" ${k.include ? "checked" : ""}>
+        ${st.code} C${c.n}</label><span class="sub ${c.kind === "cam" ? "" : "vo"}">${kindTxt} · ${c.sentences.length} sentences</span></div>
+      <div class="txt">${esc(c.text.slice(0, 160))}${c.text.length > 160 ? "…" : ""}</div>
+      <label class="f">Topic (shown when you practise)</label><input type="text" class="top" data-n="${c.n}" value="${esc(k.topic)}">
+      <label class="f">🔒 Locked words (one per line)</label><textarea class="kws" data-n="${c.n}" rows="${Math.max(3, k.keywords.length + 1)}">${esc(k.keywords.join("\n"))}</textarea>
+      <div class="row" style="margin-top:8px"><button data-rec="${c.n}">🎙 Record my voice</button><button data-play="${c.n}">▶ Listen</button></div>`;
+    box.appendChild(d);
+  }
+  box.querySelectorAll("[data-rec]").forEach(b => b.onclick = () => recordChunk(b.dataset.rec, b));
+  box.querySelectorAll("[data-play]").forEach(b => b.onclick = () => playChunk(b.dataset.play));
+  show("chunks");
+}
+function confirmChunks(){
+  document.querySelectorAll("#chunkList .inc").forEach(el => st.chunks[el.dataset.n].include = el.checked);
+  document.querySelectorAll("#chunkList .top").forEach(el => st.chunks[el.dataset.n].topic = el.value.trim() || firstWords(C(el.dataset.n).text));
+  document.querySelectorAll("#chunkList .kws").forEach(el => st.chunks[el.dataset.n].keywords = el.value.split("\n").map(s => s.trim()).filter(Boolean));
+  st.confirmed = true; save(); toast("Saved. You can practise now."); goHome();
+}
+
+/* =========================================================== practice session */
+let queue = [], task = null, filmingDay = false, reveal = false, phase = "learn";
+function startPractice(){
+  filmingDay = false; const now = Date.now();
+  const all = mine();
+  const due = all.filter(c => { const k = st.chunks[c.n]; return k.box >= 1 && k.box < 5 && k.due <= now; })
+                 .sort((a, b) => st.chunks[a.n].due - st.chunks[b.n].due).map(c => ({n: c.n, type: "review"}));
+  let allow = quotaToday();
+  const learning = all.filter(c => st.chunks[c.n].stage === "learn").map(c => ({n: c.n, type: "learn"}));
+  const fresh = all.filter(c => st.chunks[c.n].stage === "new").slice(0, Math.max(0, allow - learning.length)).map(c => ({n: c.n, type: "learn"}));
+  queue = [...due, ...learning, ...fresh];
+  if (!queue.length){
+    const extra = all.find(c => st.chunks[c.n].stage === "new");
+    if (extra && confirm("Nothing is due now. Learn one more new chunk?")) queue = [{n: extra.n, type: "learn"}];
+    else { const rev = all.filter(c => st.chunks[c.n].box >= 1 && st.chunks[c.n].box < 5);
+      if (rev.length && confirm("Nothing is due now. Review your learned chunks anyway? (Boxes won't move up early.)")) queue = rev.map(c => ({n: c.n, type: "review", extra: true}));
+      else { toast("All done for now. Come back at the next review time."); return; } }
+  }
+  begin();
+}
+function startFilmingDay(){
+  if (!st.confirmed){ toast("First check your locked words in 📋 Chunks."); return; }
+  filmingDay = true;
+  queue = mine().filter(c => st.chunks[c.n].box < 5).map(c => ({n: c.n, type: st.chunks[c.n].box >= 1 ? "review" : "learn"}));
+  if (!queue.length){ toast("Every chunk is ready. Go film! 🎬"); return; }
+  begin();
+}
+function begin(){ keepAwake(); show("practice"); next(); }
+function next(){
+  stopCheck();
+  task = queue.shift();
+  if (!task){ toast(filmingDay ? "Drill done. 🎬" : "Session done. Well done!"); goHome(); return; }
+  const k = st.chunks[task.n];
+  if (task.type === "learn" && k.stage === "new"){ k.stage = "learn"; k.sub = "kw"; k.step = 1; save(); }
+  reveal = false; phase = (task.type === "learn" && (k.sub === "kw" || k.sub === "build")) ? "learn" : "recall";
+  draw();
+}
+function stageName(k){
+  if (task.type === "review") return filmingDay ? "Filming-day drill · whole chunk" : `Review · box ${k.box} of 5`;
+  if (k.sub === "kw") return "Step 1 of 3 · 🔒 locked words";
+  if (k.sub === "build") return `Step 2 of 3 · build-up: sentence ${k.step} of ${C(task.n).sentences.length}`;
+  return "Step 3 of 3 · the whole chunk";
+}
+function cueOf(s){ return s.split(" ").map(w => w.replace(/^(['‘"“(]*)([\w’'])[\w’'\-]*/u, "$1$2")).join(" "); }
+function draw(){
+  const c = C(task.n), k = st.chunks[task.n];
+  $("pCode").textContent = `${st.code} C${c.n}`;
+  $("pStage").textContent = stageName(k);
+  $("pLeft").textContent = queue.length ? queue.length + " more" : "last one";
+  $("pFeel").textContent = c.feel ? "Feel: " + c.feel : "";
+  $("pCheck").innerHTML = "";
+  const T = $("pText"), B = $("pButtons");
+  const letters = settings.cues === "letters";
+  let html = "", ask = "";
+  const sub = task.type === "review" ? "full" : k.sub;
+  if (sub === "kw"){
+    if (phase === "learn"){
+      ask = `Topic: “${k.topic}”. Read these ${k.keywords.length} locked words aloud, twice.`;
+      html = k.keywords.map(w => `<span class="kw">${esc(w)}</span>`).join("") + `<span class="ctx">${esc(c.text)}</span>`;
+    } else {
+      ask = `Topic: “${k.topic}”. Say the ${k.keywords.length} locked words.`;
+      html = k.keywords.map(w => `<span class="kw">${esc(reveal ? w : (letters ? cueOf(w) : "?"))}</span>`).join("");
+    }
+    if (!k.keywords.length){ ask = "This chunk has no locked words."; html = ""; }
+  } else if (sub === "build"){
+    const before = c.sentences.slice(0, k.step - 1), now = c.sentences[k.step - 1];
+    if (phase === "learn"){
+      ask = k.step === 1 ? "Read the first sentence aloud, twice. Look up from the screen at the end." : "New sentence (yellow). Read it aloud, twice.";
+      html = before.map(s => `<span class="old">${esc(letters ? cueOf(s) : s)}</span> `).join("") + `<span class="new">${esc(now)}</span>`;
+    } else {
+      ask = k.step === 1 ? "Now say it from memory." : `Now say sentences 1 to ${k.step} from memory.`;
+      html = c.sentences.slice(0, k.step).map(s => `<div class="cue">${esc(reveal ? s : (letters ? cueOf(s) : ""))}</div>`).join("");
+      if (!letters && !reveal) html = `<span class="old">Topic: “${esc(k.topic)}”</span>`;
+    }
+  } else {
+    ask = "Say the whole chunk aloud, from memory.";
+    html = (letters || reveal) ? c.sentences.map(s => `<div class="cue">${esc(reveal ? s : cueOf(s))}</div>`).join("") : `<span class="old">Topic: “${esc(k.topic)}”</span>`;
+    if (k.keywords.length && !reveal) html += `<span class="ctx">🔒 ${k.keywords.length} locked words in this chunk</span>`;
+  }
+  $("pAsk").textContent = ask; T.innerHTML = html;
+
+  // buttons
+  B.innerHTML = "";
+  const btn = (txt, fn, cls = "wide") => { const b = document.createElement("button"); b.className = cls; b.innerHTML = txt; b.onclick = fn; B.appendChild(b); return b; };
+  if (phase === "learn"){
+    if (sub === "kw" && !k.keywords.length){ btn("Next →", () => { k.sub = "build"; k.step = 1; save(); phase = "learn"; draw(); }, "big"); return; }
+    btn("I've read it aloud → hide it", () => { phase = "recall"; draw(); }, "big");
+    const r = btn("🔊 Hear it", () => speakOrPlay(task.n, sub === "kw" ? k.keywords.join(". ") : c.sentences[k.step - 1])); r.style.marginTop = "10px";
+    return;
+  }
+  const top = document.createElement("div"); top.className = "row"; B.appendChild(top);
+  const rv = document.createElement("button"); rv.textContent = reveal ? "Hide text" : "👁 Show the full text"; rv.onclick = () => { reveal = !reveal; draw(); };
+  top.appendChild(rv);
+  if (settings.check === "on" && k.keywords.length && sub !== "build"){
+    const ck = document.createElement("button"); ck.id = "ckBtn"; ck.textContent = "🎙 Check my locked words"; ck.onclick = () => toggleCheck(k.keywords);
+    top.appendChild(ck);
+  }
+  if (sub === "full" && k.keywords.length){
+    gradeRow("🔒 Locked words <small>(exact?)</small>", "kw");
+    gradeRow("🗣 Flow <small>(all sentences, in order?)</small>", "fl");
+  } else if (sub === "kw") gradeRow("🔒 Locked words", "kw");
+  else gradeRow(sub === "full" ? "🗣 Flow <small>(all sentences, in order?)</small>" : "How did it go?", "fl");
+}
+let pending = {};
+function gradeRow(label, key){
+  const B = $("pButtons");
+  const l = document.createElement("div"); l.className = "gl"; l.innerHTML = label; B.appendChild(l);
+  const g = document.createElement("div"); g.className = "grades"; B.appendChild(g);
+  [["✓ Got it", "g", 0], ["~ Partly", "p", 1], ["✗ Missed", "m", 2]].forEach(([t, cls, v]) => {
+    const b = document.createElement("button"); b.className = cls; b.textContent = t;
+    b.onclick = () => { pending[key] = v; g.querySelectorAll("button").forEach(x => x.style.outline = ""); b.style.outline = "4px solid #2E1F26"; tryGrade(); };
+    g.appendChild(b);
+  });
+}
+function tryGrade(){
+  const k = st.chunks[task.n];
+  const sub = task.type === "review" ? "full" : k.sub;
+  const need = (sub === "full" && k.keywords.length) ? ["kw", "fl"] : (sub === "kw" ? ["kw"] : ["fl"]);
+  if (!need.every(x => x in pending)) return;
+  const res = pending; pending = {};
+  if ("kw" in res) k.kw[res.kw]++;
+  if ("fl" in res) k.fl[res.fl]++;
+  const worst = Math.max(...need.map(x => res[x]));     // 0 got, 1 partly, 2 missed
+  const again = () => { queue.splice(Math.min(3, queue.length), 0, task); };   // comes back after 3 others
+  const c = C(task.n);
+  if (task.type === "learn"){
+    if (worst > 0){ queue.unshift(task); }          // same step again, starting with the text
+    else if (k.sub === "kw"){ k.sub = "build"; k.step = 1; queue.unshift(task); }
+    else if (k.sub === "build"){ if (k.step < c.sentences.length){ k.step++; } else { k.sub = "full"; } queue.unshift(task); }
+    else { k.stage = "box"; k.sub = null; k.box = 1; k.learnedAt = Date.now(); k.due = Date.now() + interval(1);
+      if (filmingDay){ queue.push({n: task.n, type: "review"}); } toast(`${st.code} C${c.n} learned! It goes to box 1.`); }
+  } else {
+    if (worst === 0){ if (!task.extra || filmingDay){ k.box = Math.min(5, k.box + 1); k.due = k.box < 5 ? Date.now() + interval(k.box) : 0; }
+      if (k.box >= 5) toast(`${st.code} C${c.n} is ready to film ✅`);
+      else if (filmingDay) queue.push(task); }
+    else if (worst === 2){ k.box = 1; k.due = Date.now() + interval(1); again(); }
+    else { k.due = Date.now() + interval(k.box) / 2; if (filmingDay) again(); }
+  }
+  save(); next();
+}
+function endPractice(){ stopCheck(); goHome(); }
+
+/* =========================================================== speech check (locked words only) */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, heard = "", checking = false;
+const SMALLN = {zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,
+  fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+const STOPW = new Set("a an the and or but to of in on at is it its i you we he she they that this was be are for with as so do".split(" "));
+function toks(t){ return t.toLowerCase().replace(/[’‘`]/g, "'").replace(/(\d),(\d)/g, "$1$2").split(/[\s\-–—\/]+/).map(w => w.replace(/[^a-z0-9%]/g, "")).filter(Boolean); }
+function numberize(ws){            // "a hundred and eighty" -> "180", "ninety thousand" -> "90000"
+  const out = []; let cur = null, total = 0;
+  const flush = () => { if (cur !== null || total){ out.push(String(total + (cur || 0))); } cur = null; total = 0; };
+  const isNum = w => w in SMALLN || w === "hundred" || w === "thousand" || w === "million";
+  for (let i = 0; i < ws.length; i++){
+    const w = ws[i], nx = ws[i + 1];
+    if (w in SMALLN){ cur = (cur || 0) + SMALLN[w]; }
+    else if (w === "hundred"){ cur = (cur || 1) * 100; }
+    else if (w === "thousand" || w === "million"){ total += (cur || 1) * (w === "thousand" ? 1e3 : 1e6); cur = 0; }
+    else if (w === "a" && (nx === "hundred" || nx === "thousand")){ flush(); cur = 1; i++; ws[i] === "hundred" ? cur = 100 : (total = 1000, cur = 0); }
+    else if (w === "and" && (cur !== null || total) && nx && isNum(nx)){ continue; }
+    else { flush(); out.push(w); }
+  }
+  flush(); return out;
+}
+function lev(a, b){ const m = a.length, n = b.length; let p = Array.from({length: n + 1}, (_, j) => j);
+  for (let i = 1; i <= m; i++){ const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
+function same(a, b){ if (a === b) return true; const sa = a.replace(/(es|s|ed|ing)$/, ""), sb = b.replace(/(es|s|ed|ing)$/, "");
+  if (sa.length >= 3 && sa === sb) return true; const L = Math.min(a.length, b.length);
+  if (/^\d+$/.test(a) || /^\d+$/.test(b)) return false;
+  return L >= 4 && lev(a, b) <= (L >= 7 ? 2 : 1); }
+function scoreKeywords(keywords, transcript){
+  const T = numberize(toks(transcript));
+  return keywords.map(kw => {
+    const K = numberize(toks(kw)).filter(w => !STOPW.has(w)); if (!K.length) return {kw, ok: true};
+    const hit = K.filter(w => T.some(t => same(w, t))).length;
+    return {kw, ok: hit / K.length >= 0.67};
+  });
+}
+function toggleCheck(keywords){ checking ? stopCheck(true, keywords) : startCheck(keywords); }
+function startCheck(keywords){
+  if (!SR){ toast("This browser has no speech check. Use Google Chrome."); return; }
+  heard = ""; checking = true; rec = new SR(); rec.lang = settings.lang; rec.continuous = true; rec.interimResults = false;
+  rec.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) heard += " " + e.results[i][0].transcript; };
+  rec.onerror = e => { if (e.error === "not-allowed") toast("Allow the microphone for this page."); else if (e.error === "network") toast("Speech check needs internet."); };
+  rec.onend = () => { if (checking) try{ rec.start(); }catch(_){} };
+  try{ rec.start(); }catch(_){}
+  const b = $("ckBtn"); if (b){ b.textContent = "⏹ I've finished, check"; b.classList.add("listening"); }
+  $("pCheck").textContent = "Listening… speak now, then tap ‘I've finished’.";
+  rec._kw = keywords;
+}
+function stopCheck(show, keywords){
+  if (!rec) return; checking = false; const r = rec; rec = null;
+  try{ r.stop(); }catch(_){}
+  if (!show) return;
+  setTimeout(() => {
+    const res = scoreKeywords(keywords || r._kw, heard);
+    const n = res.filter(x => x.ok).length;
+    $("pCheck").innerHTML = `I think I heard <b>${n} of ${res.length}</b> locked words: ` +
+      res.map(x => `<span class="${x.ok ? "hit" : "miss"}">${x.ok ? "✓" : "?"} ${esc(x.kw)}</span>`).join(" · ") +
+      `<br><small>Only a suggestion. Your grade decides.</small>`;
+    const b = $("ckBtn"); if (b){ b.textContent = "🎙 Check again"; b.classList.remove("listening"); }
+  }, 700);
+}
+
+/* =========================================================== recordings (stay on this device) */
+let db = null;
+function idb(){ return db ? Promise.resolve(db) : new Promise((ok, no) => { const r = indexedDB.open("memorycoach", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("audio"); r.onsuccess = () => ok(db = r.result); r.onerror = () => no(r.error); }); }
+async function putAudio(key, blob){ const d = await idb(); return new Promise(ok => { const t = d.transaction("audio", "readwrite"); t.objectStore("audio").put(blob, key); t.oncomplete = ok; }); }
+async function getAudio(key){ try{ const d = await idb(); return await new Promise(ok => { const r = d.transaction("audio").objectStore("audio").get(key); r.onsuccess = () => ok(r.result || null); r.onerror = () => ok(null); }); }catch(_){ return null; } }
+let mediaRec = null;
+async function recordChunk(n, button){
+  if (mediaRec){ mediaRec.stop(); return; }
+  let stream; try{ stream = await navigator.mediaDevices.getUserMedia({audio: true}); }catch(e){ toast("Allow the microphone to record."); return; }
+  const parts = []; mediaRec = new MediaRecorder(stream);
+  mediaRec.ondataavailable = e => parts.push(e.data);
+  mediaRec.onstop = async () => { stream.getTracks().forEach(t => t.stop()); mediaRec = null;
+    await putAudio(st.code + "|" + n, new Blob(parts, {type: parts[0] ? parts[0].type : "audio/webm"}));
+    button.textContent = "🎙 Record again"; button.classList.remove("listening"); toast("Recording saved on this device."); };
+  mediaRec.start(); button.textContent = "⏹ Stop recording"; button.classList.add("listening");
+}
+let player = null;
+function stopAudio(){ if (player){ player.pause(); player = null; } if (window.speechSynthesis) speechSynthesis.cancel(); }
+async function playChunk(n){ stopAudio(); const blob = await getAudio(st.code + "|" + n);
+  if (blob){ player = new Audio(URL.createObjectURL(blob)); return new Promise(ok => { player.onended = ok; player.play(); }); }
+  return speak(C(n).text); }
+function speak(text){ return new Promise(ok => { if (!window.speechSynthesis){ ok(); return; }
+  const u = new SpeechSynthesisUtterance(text); u.lang = settings.lang; u.rate = 0.92; u.onend = ok; u.onerror = ok; speechSynthesis.speak(u); }); }
+async function speakOrPlay(n, text){ stopAudio(); speak(text); }
+
+/* walking */
+let walking = false;
+async function toggleWalk(){
+  if (walking){ stopWalk(); return; }
+  walking = true; $("walkBtn").textContent = "⏹ Stop"; keepAwake();
+  const which = $("walkWhich").value, gap = +$("walkGap").value * 1000;
+  const list = mine().filter(c => which === "all" || st.chunks[c.n].box < 5);
+  for (const c of list){
+    if (!walking) break;
+    $("walkNow").textContent = `${st.code} C${c.n}`;
+    await playChunk(c.n);
+    if (!walking) break;
+    $("walkNow").textContent = `${st.code} C${c.n} · your turn…`;
+    await new Promise(r => setTimeout(r, gap));
+  }
+  stopWalk();
+}
+function stopWalk(){ walking = false; stopAudio(); $("walkBtn").textContent = "▶ Play"; $("walkNow").textContent = "—"; releaseWake(); }
+
+/* =========================================================== progress */
+function pct(a){ const t = a[0] + a[1] + a[2]; return t ? Math.round(100 * (a[0] + a[1] / 2) / t) + "%" : "–"; }
+function openProgress(){
+  const all = mine(), ready = all.filter(c => st.chunks[c.n].box >= 5).length;
+  $("progSum").innerHTML = `<b>${ready}</b> of ${all.length} chunks ready to film.` + (ready === all.length && all.length ? " 🎬 You're ready!" : "");
+  let h = "<tr><th>Clip code</th><th>Topic</th><th>Where</th><th>🔒 words</th><th>🗣 flow</th></tr>";
+  for (const c of all){
+    const k = st.chunks[c.n];
+    const where = k.box >= 5 ? '<span class="ready">✅ ready</span>' : k.stage === "new" ? "not started" :
+      k.stage === "learn" ? (k.sub === "kw" ? "learning: words" : k.sub === "build" ? `learning: ${k.step}/${c.sentences.length}` : "learning: whole") :
+      `<span class="dots">${"●".repeat(k.box)}${"○".repeat(5 - k.box)}</span>`;
+    h += `<tr><td class="code" data-n="${c.n}">${st.code} C${c.n}</td><td>${esc(k.topic)}</td><td>${where}</td><td>${pct(k.kw)}</td><td>${pct(k.fl)}</td></tr>`;
+  }
+  $("progTable").innerHTML = h;
+  $("progTable").querySelectorAll(".code").forEach(td => td.onclick = () => { $("slateC").textContent = `${st.code} C${td.dataset.n}`; $("slate").style.display = "flex"; });
+  show("progress");
+}
+
+/* =========================================================== settings, files, backup */
+function fillSettings(){
+  if (st){ $("sDate").value = st.filmDate || ""; $("sStyle").value = st.style || "auto"; }
+  $("sCues").value = settings.cues; $("sCheck").value = settings.check; $("sLang").value = settings.lang; $("sSize").value = settings.size;
+  const sel = $("sEpisode"); sel.innerHTML = "";
+  for (const code of store.get("index", [])){ const o = document.createElement("option"); o.value = code; o.textContent = code; if (st && code === st.code) o.selected = true; sel.appendChild(o); }
+}
+function saveSettings(){
+  if (st){ st.filmDate = $("sDate").value; st.style = $("sStyle").value;
+    // reschedule waiting chunks so they fit the (new) date
+    for (const c of mine()){ const k = st.chunks[c.n]; if (k.box >= 1 && k.box < 5) k.due = Math.min(k.due, Date.now() + interval(k.box)); }
+    save(); }
+  Object.assign(settings, {cues: $("sCues").value, check: $("sCheck").value, lang: $("sLang").value, size: +$("sSize").value});
+  store.set("settings", settings); document.documentElement.style.setProperty("--fs", settings.size + "px");
+  toast("Saved."); goHome();
+}
+function pickScript(){ $("fileTxt").value = ""; $("fileTxt").click(); }
+$("fileTxt").onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => newScript(r.result, f.name); r.readAsText(f); };
+function switchEpisode(code){ if (loadEpisode(code)){ toast("Switched to " + code); goHome(); } }
+function exportBackup(){
+  const blob = new Blob([JSON.stringify({app: "memorycoach", saved: new Date().toISOString(), episode: st}, null, 1)], {type: "application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `Memory Coach backup ${st.code} ${new Date().toISOString().slice(0, 10)}.json`; a.click();
+}
+function pickBackup(){ $("fileJson").value = ""; $("fileJson").click(); }
+$("fileJson").onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader();
+  r.onload = () => { try{ const j = JSON.parse(r.result); if (j.app !== "memorycoach") throw 0;
+      store.set("ep_" + j.episode.code, j.episode); const idx = store.get("index", []); if (!idx.includes(j.episode.code)){ idx.push(j.episode.code); store.set("index", idx); }
+      loadEpisode(j.episode.code); toast("Backup loaded."); goHome(); }catch(_){ toast("That isn't a Memory Coach backup file."); } };
+  r.readAsText(f); };
+function resetEpisode(){
+  if (!confirm("Start " + st.code + " again? All boxes and grades go back to zero. Your locked words are kept.")) return;
+  for (const c of ep.chunks){ const k = st.chunks[c.n]; Object.assign(k, {stage: "new", sub: null, step: 1, box: 0, due: 0, learnedAt: 0, kw: [0,0,0], fl: [0,0,0]}); }
+  save(); toast("Started again."); goHome();
+}
+
+/* keep the screen on while practising */
+let wake = null;
+async function keepAwake(){ try{ wake = await navigator.wakeLock.request("screen"); }catch(_){} }
+function releaseWake(){ try{ wake && wake.release(); }catch(_){} wake = null; }
+
+/* start */
+const last = store.get("last", null); if (last) loadEpisode(last);
+renderHome();
+setInterval(() => { if ($("home").classList.contains("on")) renderHome(); }, 60e3);
+
+return {pickScript, show, goHome, startPractice, startFilmingDay, endPractice, openChunks, confirmChunks, openProgress,
+  saveSettings, switchEpisode, exportBackup, pickBackup, resetEpisode, toggleWalk, stopWalk,
+  _test: {parseScript, scoreKeywords, numberize, newScript}};
+})();
+</script>
+</body>
+</html>
