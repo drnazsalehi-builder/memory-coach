@@ -166,7 +166,7 @@ td,th{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left;verti
     </select>
     <label class="f">Practice cues</label>
     <select id="sCues">
-      <option value="letters">First letters (easier)</option>
+      <option value="letters">First words (easier)</option>
       <option value="none">Nothing, only the topic (harder)</option>
     </select>
     <label class="f">Speech check (only listens for 🔒 locked words; never judges accent)</label>
@@ -441,7 +441,8 @@ function stageName(k){
   if (k.sub === "build") return `Step 2 of 3 · build-up: sentence ${k.step} of ${C(task.n).sentences.length}`;
   return "Step 3 of 3 · the whole chunk";
 }
-function cueOf(s){ return s.split(" ").map(w => w.replace(/^(['‘"“(]*)([\w’'])[\w’'\-]*/u, "$1$2")).join(" "); }
+// hint = the first word of a sentence; a one-word locked word shows only "…"
+function cueOf(s, n = 1){ const ws = s.split(" "); if (ws.length === 1) return "…"; return ws.length <= n ? ws.slice(0, -1).join(" ") + " …" : ws.slice(0, n).join(" ") + " …"; }
 function draw(){
   const c = C(task.n), k = st.chunks[task.n];
   $("pCode").textContent = `${st.code} C${c.n}`;
@@ -459,7 +460,7 @@ function draw(){
       html = k.keywords.map(w => `<span class="kw">${esc(w)}</span>`).join("") + `<span class="ctx">${esc(c.text)}</span>`;
     } else {
       ask = `Topic: “${k.topic}”. Say the ${k.keywords.length} locked words.`;
-      html = k.keywords.map(w => `<span class="kw">${esc(reveal ? w : (letters ? cueOf(w) : "?"))}</span>`).join("");
+      html = k.keywords.map(w => `<span class="kw">${esc(reveal ? w : (letters ? cueOf(w, 1) : "?"))}</span>`).join("");
     }
     if (!k.keywords.length){ ask = "This chunk has no locked words."; html = ""; }
   } else if (sub === "build"){
